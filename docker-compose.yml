@@ -1,0 +1,58 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: photodrop_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: photodrop
+      POSTGRES_PASSWORD: photodrop
+      POSTGRES_DB: photodrop
+    ports:
+      - "5433:5432"
+    volumes:
+      - photodrop_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U photodrop"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: photodrop_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # S3-compatible object storage for local development. In production, point
+  # S3_ENDPOINT at AWS S3 / DigitalOcean Spaces / Backblaze B2 instead and
+  # drop this service.
+  minio:
+    image: minio/minio:latest
+    container_name: photodrop_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: photodrop_minio
+      MINIO_ROOT_PASSWORD: photodrop_minio_secret
+    ports:
+      - "9000:9000" # S3 API
+      - "9001:9001" # Web console
+    volumes:
+      - photodrop_minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  photodrop_pg_data:
+  photodrop_minio_data:

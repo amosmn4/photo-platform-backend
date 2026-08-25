@@ -1,0 +1,62 @@
+{
+  "name": "photodrop-backend",
+  "version": "1.0.0",
+  "description": "Backend API for PhotoDrop — bulk photo upload + QR-based gallery distribution for photographers",
+  "private": true,
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "dev:worker": "tsx watch src/workers/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "start:worker": "node dist/workers/index.js",
+    "migrate": "tsx scripts/migrate.ts",
+    "lint": "eslint \"src/**/*.ts\"",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.616.0",
+    "@aws-sdk/s3-request-presigner": "^3.616.0",
+    "bcrypt": "^5.1.1",
+    "bullmq": "^5.10.0",
+    "compression": "^1.7.4",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "exifr": "^7.1.3",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.3.1",
+    "helmet": "^7.1.0",
+    "ioredis": "^5.4.1",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.12.0",
+    "pino": "^9.3.1",
+    "pino-http": "^10.2.0",
+    "pino-pretty": "^11.2.1",
+    "qrcode": "^1.5.3",
+    "sharp": "^0.33.4",
+    "slugify": "^1.6.6",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/compression": "^1.7.5",
+    "@types/cookie-parser": "^1.4.7",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/node": "^20.14.11",
+    "@types/pg": "^8.11.6",
+    "@types/qrcode": "^1.5.5",
+    "@typescript-eslint/eslint-plugin": "^7.16.1",
+    "@typescript-eslint/parser": "^7.16.1",
+    "eslint": "^8.57.0",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.4"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

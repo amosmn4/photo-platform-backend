@@ -29,10 +29,13 @@ router.get('/:eventId/sessions', EventController.listSessions);
 router.post('/:eventId/access-tokens', validate({ body: issueTokenSchema }), EventController.issueToken);
 router.get('/:eventId/access-tokens', EventController.listTokens);
 router.delete('/:eventId/access-tokens/:tokenId', EventController.revokeToken);
+router.delete('/:eventId/access-tokens/:tokenId/purge', EventController.deleteToken);
 
 router.post('/:eventId/uploads/start', validate({ body: startBatchSchema }), UploadController.start);
 router.post('/:eventId/uploads/confirm', validate({ body: confirmUploadSchema }), UploadController.confirm);
 
 router.get('/:eventId/photos', EventController.listPhotos);
+router.get('/:eventId/photos/:photoId/download', EventController.getPhotoDownloadUrl);
+router.delete('/:eventId/photos/:photoId', EventController.deletePhoto);
 
 export default router;

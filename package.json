@@ -11,6 +11,7 @@
     "start": "node dist/server.js",
     "start:worker": "node dist/workers/index.js",
     "migrate": "tsx scripts/migrate.ts",
+    "db:deploy": "tsx scripts/setup-production-db.ts",
     "lint": "eslint \"src/**/*.ts\"",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"

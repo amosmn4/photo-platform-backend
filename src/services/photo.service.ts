@@ -171,4 +171,31 @@ export const PhotoService = {
     await PhotoModel.incrementDownloadCount(photoId);
     return getPresignedDownloadUrl(key, photo.original_filename);
   },
+
+  /** Ownership-checked variant of getDownloadUrl for the photographer's own
+   *  management gallery (vs. the token-scoped public gallery route). */
+  async getOwnedDownloadUrl(
+    eventId: string,
+    photographerId: string,
+    photoId: string,
+    variant: 'original' | 'large' | 'medium' = 'original',
+  ) {
+    const event = await EventModel.findById(eventId);
+    if (!event || event.photographer_id !== photographerId) throw ApiError.notFound('Event not found');
+
+    const photo = await PhotoModel.findById(photoId);
+    if (!photo || photo.event_id !== eventId) throw ApiError.notFound('Photo not found');
+
+    return this.getDownloadUrl(photoId, variant);
+  },
+
+  async deleteOwnedPhoto(eventId: string, photographerId: string, photoId: string): Promise<void> {
+    const event = await EventModel.findById(eventId);
+    if (!event || event.photographer_id !== photographerId) throw ApiError.notFound('Event not found');
+
+    const photo = await PhotoModel.findById(photoId);
+    if (!photo || photo.event_id !== eventId) throw ApiError.notFound('Photo not found');
+
+    await PhotoModel.softDelete(photoId);
+  },
 };

@@ -83,6 +83,15 @@ export const TokenService = {
     await AccessTokenModel.revoke(tokenId, reason);
   },
 
+  /** Permanently removes a QR/access token, distinct from `revoke` (which
+   *  just disables it while leaving it listed for the audit trail). */
+  async remove(eventId: string, tokenId: string): Promise<void> {
+    const tokens = await AccessTokenModel.listForEvent(eventId);
+    const match = tokens.find((t) => t.id === tokenId);
+    if (!match) throw ApiError.notFound('Access token not found for this event');
+    await AccessTokenModel.delete(tokenId);
+  },
+
   async listForEvent(eventId: string): Promise<AccessToken[]> {
     return AccessTokenModel.listForEvent(eventId);
   },

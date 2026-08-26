@@ -3,12 +3,14 @@ import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
 import { UserModel } from '../models/User';
 import { RefreshTokenModel } from '../models/RefreshToken';
-import { generateOpaqueToken, hashToken } from '../utils/token';
+import { generateOpaqueToken, generateVerificationCode, hashToken } from '../utils/token';
 import { ApiError } from '../utils/ApiError';
 import { JwtAccessPayload, PublicUser, User } from '../types';
 
+const VERIFICATION_CODE_TTL_MINUTES = 15;
+
 function toPublicUser(user: User): PublicUser {
-  const { password_hash, ...rest } = user;
+  const { password_hash, email_verification_code_hash, email_verification_expires_at, ...rest } = user;
   return rest;
 }
 
@@ -24,7 +26,52 @@ export const AuthService = {
       fullName: input.fullName,
       businessName: input.businessName ?? null,
     });
-    return toPublicUser(user);
+
+    const { raw, hash } = generateVerificationCode();
+    const expiresAt = new Date(Date.now() + VERIFICATION_CODE_TTL_MINUTES * 60 * 1000);
+    await UserModel.setEmailVerificationCode(user.id, hash, expiresAt);
+
+    return {
+      user: toPublicUser(user),
+      // No email service is configured in this environment — the code is
+      // handed back directly in dev instead of being emailed. Never expose
+      // this outside development.
+      devVerificationCode: env.NODE_ENV === 'production' ? undefined : raw,
+    };
+  },
+
+  async resendVerification(email: string) {
+    const user = await UserModel.findByEmail(email);
+    if (!user) throw ApiError.notFound('No account with that email');
+    if (user.email_verified_at) throw ApiError.conflict('This email is already verified');
+
+    const { raw, hash } = generateVerificationCode();
+    const expiresAt = new Date(Date.now() + VERIFICATION_CODE_TTL_MINUTES * 60 * 1000);
+    await UserModel.setEmailVerificationCode(user.id, hash, expiresAt);
+
+    return { devVerificationCode: env.NODE_ENV === 'production' ? undefined : raw };
+  },
+
+  /** Verifies the code and logs the user in immediately (they've just proven
+   *  code ownership, so there's no reason to make them re-enter a password). */
+  async verifyEmail(input: { email: string; code: string; userAgent?: string; ipAddress?: string }) {
+    const user = await UserModel.findByEmail(input.email);
+    if (!user) throw ApiError.notFound('No account with that email');
+
+    if (user.email_verified_at) {
+      // Already verified — treat as success rather than an error so a
+      // double-submit or stale tab doesn't dead-end the user.
+    } else {
+      const expired = !user.email_verification_expires_at || new Date(user.email_verification_expires_at) < new Date();
+      const matches = user.email_verification_code_hash === hashToken(input.code);
+      if (expired || !matches) throw ApiError.badRequest('That code is invalid or has expired');
+      await UserModel.markEmailVerified(user.id);
+    }
+
+    const verified = await UserModel.findById(user.id);
+    const accessToken = this.signAccessToken(verified!);
+    const refreshToken = await this.issueRefreshToken(verified!.id, input.userAgent, input.ipAddress);
+    return { user: toPublicUser(verified!), accessToken, refreshToken };
   },
 
   async login(input: { email: string; password: string; userAgent?: string; ipAddress?: string }) {

@@ -17,8 +17,23 @@ function setRefreshCookie(res: Response, token: string) {
 
 export const AuthController = {
   register: asyncHandler(async (req: Request, res: Response) => {
-    const user = await AuthService.register(req.body);
-    res.status(201).json({ user });
+    const { user, devVerificationCode } = await AuthService.register(req.body);
+    res.status(201).json({ user, devVerificationCode });
+  }),
+
+  verifyEmail: asyncHandler(async (req: Request, res: Response) => {
+    const { user, accessToken, refreshToken } = await AuthService.verifyEmail({
+      ...req.body,
+      userAgent: req.headers['user-agent'],
+      ipAddress: req.ip,
+    });
+    setRefreshCookie(res, refreshToken);
+    res.json({ user, accessToken });
+  }),
+
+  resendVerification: asyncHandler(async (req: Request, res: Response) => {
+    const { devVerificationCode } = await AuthService.resendVerification(req.body.email);
+    res.json({ devVerificationCode });
   }),
 
   login: asyncHandler(async (req: Request, res: Response) => {

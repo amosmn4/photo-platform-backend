@@ -73,6 +73,12 @@ export const EventController = {
     res.status(204).send();
   }),
 
+  deleteToken: asyncHandler(async (req: Request, res: Response) => {
+    await EventService.getOwned(req.params.eventId, req.user!.id);
+    await TokenService.remove(req.params.eventId, req.params.tokenId);
+    res.status(204).send();
+  }),
+
   // Photographer's own dashboard gallery — same keyset pagination as the
   // public one, ownership-gated. Frontend uses this for the "manage
   // photos" grid (with lazy-loaded thumbnails and infinite scroll).
@@ -86,5 +92,21 @@ export const EventController = {
       cursor: req.query.cursor as string | undefined,
     });
     res.json(page);
+  }),
+
+  getPhotoDownloadUrl: asyncHandler(async (req: Request, res: Response) => {
+    const variant = (req.query.variant as 'original' | 'large' | 'medium') ?? 'original';
+    const url = await PhotoService.getOwnedDownloadUrl(
+      req.params.eventId,
+      req.user!.id,
+      req.params.photoId,
+      variant,
+    );
+    res.json({ url });
+  }),
+
+  deletePhoto: asyncHandler(async (req: Request, res: Response) => {
+    await PhotoService.deleteOwnedPhoto(req.params.eventId, req.user!.id, req.params.photoId);
+    res.status(204).send();
   }),
 };

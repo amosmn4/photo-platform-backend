@@ -13,13 +13,15 @@ export interface User {
   storage_used_bytes: string; // BIGINT comes back as string from `pg`
   storage_quota_bytes: string;
   email_verified_at: string | null;
+  email_verification_code_hash: string | null;
+  email_verification_expires_at: string | null;
   last_login_at: string | null;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
 }
 
-export type PublicUser = Omit<User, 'password_hash'>;
+export type PublicUser = Omit<User, 'password_hash' | 'email_verification_code_hash' | 'email_verification_expires_at'>;
 
 export type EventStatus = 'draft' | 'processing' | 'published' | 'archived';
 export type GalleryVisibility = 'public' | 'private_by_token' | 'find_my_photos';

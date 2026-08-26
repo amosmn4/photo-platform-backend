@@ -42,4 +42,25 @@ export const UserModel = {
     );
     return rows[0] ?? null;
   },
+
+  async setEmailVerificationCode(id: string, codeHash: string, expiresAt: Date): Promise<void> {
+    await query(
+      `UPDATE users SET email_verification_code_hash = $2, email_verification_expires_at = $3 WHERE id = $1`,
+      [id, codeHash, expiresAt],
+    );
+  },
+
+  async markEmailVerified(id: string): Promise<User> {
+    const { rows } = await query<User>(
+      `UPDATE users
+          SET email_verified_at = now(),
+              status = 'active'::user_status,
+              email_verification_code_hash = NULL,
+              email_verification_expires_at = NULL
+        WHERE id = $1
+        RETURNING *`,
+      [id],
+    );
+    return rows[0];
+  },
 };

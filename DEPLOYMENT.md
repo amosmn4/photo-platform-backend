@@ -86,6 +86,29 @@ To add a new migration: create `src/db/migrations/0XX_description.sql` with
 the next number, write forward-only SQL (no down-migrations — roll forward
 with a corrective migration instead), and run `npm run migrate`.
 
+### First-time production setup
+
+`npm run migrate` expects the target database to already exist. For a brand
+new production Postgres instance (self-managed — most managed platforms
+auto-provision the database named in your connection string), use:
+
+```bash
+DATABASE_URL=postgresql://user:pass@prod-host:5432/photodrop npm run db:deploy
+```
+
+This creates the database if it doesn't exist yet (safe/idempotent — skips
+creation if it's already there), then runs `npm run migrate` against it.
+Prompts for confirmation before doing anything; pass `--yes` to skip the
+prompt for CI/non-interactive use. If your host requires SSL (RDS, Supabase,
+Neon, Railway, etc.), append `?sslmode=require` to `DATABASE_URL` — `pg`
+picks that up directly from the connection string.
+
+> Migration `006_faces_phase2.sql` needs the `vector` (pgvector) extension.
+> If it's not installed on your production Postgres, that migration — and
+> `db:deploy` — will fail there. See src/db/migrations/006_faces_phase2.sql;
+> it's Phase 2 schema with no Phase 1 dependents, so install pgvector on the
+> server or drop that one file for this deployment.
+
 ## 7. Environment variables
 
 See `.env.example` for the full list with inline explanations. Grouped
@@ -113,7 +136,9 @@ failing unpredictably later.
 - **CDN**: set `CDN_BASE_URL` to serve thumbnails/previews through a CDN
   instead of the storage origin directly.
 - **Database**: run migrations (`npm run migrate`) as a release step, before
-  the new API/worker versions start receiving traffic.
+  the new API/worker versions start receiving traffic. For a brand new
+  database, use `npm run db:deploy` once instead (see section 6) — it
+  creates the database first, then runs the same migrations.
 - **Secrets**: never commit `.env`. Inject `JWT_ACCESS_SECRET` and storage
   credentials via your platform's secret manager.
 - **Horizontal scaling**: the API server is stateless (JWT auth, no

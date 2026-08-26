@@ -61,6 +61,10 @@ export const AccessTokenModel = {
     return rows.length > 0;
   },
 
+  async delete(id: string): Promise<void> {
+    await query(`DELETE FROM access_tokens WHERE id = $1`, [id]);
+  },
+
   async revoke(id: string, reason?: string): Promise<void> {
     await query(
       `UPDATE access_tokens SET status = 'revoked', revoked_at = now(), revoked_reason = $2 WHERE id = $1`,

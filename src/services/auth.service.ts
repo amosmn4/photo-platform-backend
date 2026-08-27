@@ -5,6 +5,7 @@ import { UserModel } from '../models/User';
 import { RefreshTokenModel } from '../models/RefreshToken';
 import { generateOpaqueToken, generateVerificationCode, hashToken } from '../utils/token';
 import { ApiError } from '../utils/ApiError';
+import { MailService } from './mail.service';
 import { JwtAccessPayload, PublicUser, User } from '../types';
 
 const VERIFICATION_CODE_TTL_MINUTES = 15;
@@ -30,12 +31,12 @@ export const AuthService = {
     const { raw, hash } = generateVerificationCode();
     const expiresAt = new Date(Date.now() + VERIFICATION_CODE_TTL_MINUTES * 60 * 1000);
     await UserModel.setEmailVerificationCode(user.id, hash, expiresAt);
+    await MailService.sendVerificationCode(user.email, raw);
 
     return {
       user: toPublicUser(user),
-      // No email service is configured in this environment — the code is
-      // handed back directly in dev instead of being emailed. Never expose
-      // this outside development.
+      // Dev/staging fallback for when SMTP isn't configured yet (see
+      // MailService) — never expose this outside development.
       devVerificationCode: env.NODE_ENV === 'production' ? undefined : raw,
     };
   },
@@ -48,6 +49,7 @@ export const AuthService = {
     const { raw, hash } = generateVerificationCode();
     const expiresAt = new Date(Date.now() + VERIFICATION_CODE_TTL_MINUTES * 60 * 1000);
     await UserModel.setEmailVerificationCode(user.id, hash, expiresAt);
+    await MailService.sendVerificationCode(user.email, raw);
 
     return { devVerificationCode: env.NODE_ENV === 'production' ? undefined : raw };
   },

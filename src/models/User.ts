@@ -50,6 +50,33 @@ export const UserModel = {
     );
   },
 
+  // Admin account list, newest first; excludes other admins from the count/listing entirely.
+  async listAccounts(limit: number, offset: number): Promise<{ users: User[]; total: number }> {
+    const { rows } = await query<User>(
+      `SELECT * FROM users WHERE deleted_at IS NULL AND role != 'admin'
+        ORDER BY created_at DESC LIMIT $1 OFFSET $2`,
+      [limit, offset],
+    );
+    const { rows: countRows } = await query<{ count: string }>(
+      `SELECT COUNT(*)::text AS count FROM users WHERE deleted_at IS NULL AND role != 'admin'`,
+    );
+    return { users: rows, total: Number(countRows[0].count) };
+  },
+
+  async setStatus(id: string, status: 'active' | 'suspended'): Promise<User | null> {
+    const { rows } = await query<User>(
+      `UPDATE users SET status = $2::user_status WHERE id = $1 AND role != 'admin' RETURNING *`,
+      [id, status],
+    );
+    return rows[0] ?? null;
+  },
+
+  // Hard delete — cascades to the account's events/photos/tokens (ON DELETE CASCADE).
+  async hardDelete(id: string): Promise<boolean> {
+    const { rowCount } = await query(`DELETE FROM users WHERE id = $1 AND role != 'admin'`, [id]);
+    return (rowCount ?? 0) > 0;
+  },
+
   async markEmailVerified(id: string): Promise<User> {
     const { rows } = await query<User>(
       `UPDATE users

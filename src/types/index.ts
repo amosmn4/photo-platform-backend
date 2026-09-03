@@ -38,6 +38,7 @@ export interface Event {
   visibility: GalleryVisibility;
   status: EventStatus;
   cover_photo_id: string | null;
+  cover_image_key: string | null;
   photo_count: number;
   total_size_bytes: string;
   settings: Record<string, unknown>;
@@ -126,6 +127,17 @@ export interface UploadBatch {
   failed_files: number;
   created_at: string;
   completed_at: string | null;
+}
+
+export interface SiteSettings {
+  id: number;
+  logo_key: string | null;
+  tagline: string | null;
+  contact_email: string | null;
+  contact_phone: string | null;
+  contact_address: string | null;
+  social_links: Record<string, string>;
+  updated_at: string;
 }
 
 export interface JwtAccessPayload {

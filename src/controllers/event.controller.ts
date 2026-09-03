@@ -5,6 +5,7 @@ import { EventModel } from '../models/Event';
 import { TokenService } from '../services/token.service';
 import { PhotoService } from '../services/photo.service';
 import { parseLimit } from '../utils/pagination';
+import { ApiError } from '../utils/ApiError';
 
 export const EventController = {
   create: asyncHandler(async (req: Request, res: Response) => {
@@ -20,7 +21,13 @@ export const EventController = {
   }),
 
   get: asyncHandler(async (req: Request, res: Response) => {
-    const event = await EventService.getOwned(req.params.eventId, req.user!.id);
+    const event = await EventService.getOwnedDto(req.params.eventId, req.user!.id);
+    res.json({ event });
+  }),
+
+  uploadCover: asyncHandler(async (req: Request, res: Response) => {
+    if (!req.file) throw ApiError.badRequest('No image provided');
+    const event = await EventService.uploadCoverImage(req.params.eventId, req.user!.id, req.file.buffer);
     res.json({ event });
   }),
 

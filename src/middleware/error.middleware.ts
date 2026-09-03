@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { ZodError } from 'zod';
+import multer from 'multer';
 import { ApiError } from '../utils/ApiError';
 import { logger } from '../config/logger';
 import { env } from '../config/env';
@@ -10,6 +11,11 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
     return res.status(400).json({
       error: { message: 'Validation failed', details: err.flatten() },
     });
+  }
+
+  if (err instanceof multer.MulterError) {
+    const message = err.code === 'LIMIT_FILE_SIZE' ? 'Image is too large (max 8MB)' : err.message;
+    return res.status(400).json({ error: { message } });
   }
 
   if (err instanceof ApiError) {

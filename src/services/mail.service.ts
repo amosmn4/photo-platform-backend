@@ -5,7 +5,7 @@ import { logger } from '../config/logger';
 export const MailService = {
   async send(input: { to: string; subject: string; html: string; text: string }): Promise<void> {
     if (!isMailConfigured) {
-      logger.warn({ to: input.to, subject: input.subject }, 'SMTP not configured — email not sent');
+      logger.warn({ to: input.to, subject: input.subject }, 'SMTP not configured, email not sent');
       return;
     }
 

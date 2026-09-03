@@ -94,4 +94,12 @@ export const EventModel = {
   async softDelete(id: string): Promise<void> {
     await query(`UPDATE events SET deleted_at = now() WHERE id = $1`, [id]);
   },
+
+  async setCoverImageKey(id: string, coverImageKey: string | null): Promise<Event | null> {
+    const { rows } = await query<Event>(
+      `UPDATE events SET cover_image_key = $2 WHERE id = $1 AND deleted_at IS NULL RETURNING *`,
+      [id, coverImageKey],
+    );
+    return rows[0] ?? null;
+  },
 };

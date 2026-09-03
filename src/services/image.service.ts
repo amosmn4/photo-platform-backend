@@ -32,6 +32,19 @@ export async function generateVariant(
   return { buffer, width: metadata.width ?? targetWidth, height: metadata.height ?? 0 };
 }
 
+// For single admin/photographer-uploaded images (logo, event cover) — resized, converted to webp.
+export async function generateBrandingImage(originalBuffer: Buffer, maxWidth: number): Promise<GeneratedVariant> {
+  const pipeline = sharp(originalBuffer)
+    .rotate()
+    .resize({ width: maxWidth, withoutEnlargement: true })
+    .webp({ quality: 82 });
+
+  const buffer = await pipeline.toBuffer();
+  const metadata = await sharp(buffer).metadata();
+
+  return { buffer, width: metadata.width ?? maxWidth, height: metadata.height ?? 0 };
+}
+
 // exifr doesn't guarantee a real Date — malformed EXIF can yield a string or invalid Date.
 function normalizeExifDate(value: unknown): string | null {
   if (value instanceof Date) return isNaN(value.getTime()) ? null : value.toISOString();

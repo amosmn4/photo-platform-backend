@@ -12,6 +12,7 @@
     "start:worker": "node dist/workers/index.js",
     "migrate": "tsx scripts/migrate.ts",
     "db:deploy": "tsx scripts/setup-production-db.ts",
+    "seed:admin": "tsx scripts/seed-admin.ts",
     "lint": "eslint \"src/**/*.ts\"",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
@@ -31,6 +32,7 @@
     "helmet": "^7.1.0",
     "ioredis": "^5.4.1",
     "jsonwebtoken": "^9.0.2",
+    "multer": "^2.3.0",
     "nodemailer": "^9.0.5",
     "pg": "^8.12.0",
     "pino": "^9.3.1",
@@ -49,6 +51,7 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.6",
+    "@types/multer": "^2.2.0",
     "@types/node": "^20.14.11",
     "@types/nodemailer": "^8.0.1",
     "@types/pg": "^8.11.6",

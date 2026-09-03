@@ -1,11 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { AnyZodObject } from 'zod';
 
-/**
- * Validates and replaces req.body/query/params with the parsed (and
- * type-coerced) result. Controllers can then trust the shape without
- * re-checking anything.
- */
+// Validates and replaces req.body/query/params so controllers can trust their shape.
 export function validate(schema: {
   body?: AnyZodObject;
   query?: AnyZodObject;
@@ -18,7 +14,7 @@ export function validate(schema: {
       if (schema.params) req.params = schema.params.parse(req.params) as typeof req.params;
       next();
     } catch (err) {
-      next(err); // ZodError caught centrally by error.middleware.ts
+      next(err);
     }
   };
 }

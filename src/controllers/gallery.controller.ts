@@ -6,12 +6,7 @@ import { PhotoSessionModel } from '../models/PhotoSession';
 import { ApiError } from '../utils/ApiError';
 import { parseLimit } from '../utils/pagination';
 
-/**
- * Every handler here trusts req.accessToken (set by accessToken.middleware)
- * for the event id — never req.params or req.query. That's what makes a
- * scanned QR safe: it can only ever see the one event its token was issued
- * for.
- */
+// Handlers trust req.accessToken for the event id, never req.params or req.query.
 export const GalleryController = {
   getEvent: asyncHandler(async (req: Request, res: Response) => {
     const event = await EventModel.findById(req.accessToken!.event_id);
@@ -34,9 +29,6 @@ export const GalleryController = {
     res.json({ sessions });
   }),
 
-  // GET /g/:token/photos?cursor=...&limit=50&sessionId=...
-  // Cursor/keyset paginated — see utils/pagination.ts. The frontend uses
-  // this with an IntersectionObserver for infinite-scroll lazy loading.
   browse: asyncHandler(async (req: Request, res: Response) => {
     const limit = parseLimit(req.query.limit, { def: 50, max: 100 });
     const page = await PhotoService.galleryPage({
@@ -48,8 +40,6 @@ export const GalleryController = {
     res.json(page);
   }),
 
-  // GET /g/:token/find-by-time?from=ISO&to=ISO — product doc "Option A":
-  // customer remembers roughly when they were photographed.
   findByTime: asyncHandler(async (req: Request, res: Response) => {
     const { from, to } = req.query as { from: string; to: string };
     const items = await PhotoService.findByTimeRange(req.accessToken!.event_id, from, to);

@@ -23,7 +23,6 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
   return res.status(500).json({
     error: {
       message: 'Something went wrong on our end.',
-      // Only leak stack traces outside production.
       stack: env.NODE_ENV === 'development' && err instanceof Error ? err.stack : undefined,
     },
   });

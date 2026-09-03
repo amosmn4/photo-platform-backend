@@ -10,8 +10,6 @@ export const pool = new Pool({
 });
 
 pool.on('error', (err) => {
-  // Idle client errors (dropped connections etc.) must not crash the
-  // process — log and let the pool recycle the connection.
   logger.error({ err }, 'Unexpected error on idle Postgres client');
 });
 
@@ -28,12 +26,7 @@ export async function query<T extends QueryResultRow = QueryResultRow>(
   return result;
 }
 
-/**
- * Runs `fn` inside a single transaction. Rolls back on any thrown error.
- * Use for anything that touches more than one table where partial writes
- * would leave the system inconsistent (e.g. creating an event + its default
- * access token).
- */
+// Runs fn in a transaction, rolling back on any thrown error.
 export async function withTransaction<T>(
   fn: (client: PoolClient) => Promise<T>,
 ): Promise<T> {

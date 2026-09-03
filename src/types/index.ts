@@ -10,7 +10,7 @@ export interface User {
   phone: string | null;
   role: UserRole;
   status: UserStatus;
-  storage_used_bytes: string; // BIGINT comes back as string from `pg`
+  storage_used_bytes: string;
   storage_quota_bytes: string;
   email_verified_at: string | null;
   email_verification_code_hash: string | null;
@@ -129,7 +129,7 @@ export interface UploadBatch {
 }
 
 export interface JwtAccessPayload {
-  sub: string; // user id
+  sub: string;
   role: UserRole;
 }
 
@@ -138,9 +138,7 @@ export interface AuthenticatedRequestUser {
   role: UserRole;
 }
 
-// Extends Express's Request type with the authenticated user (set by
-// auth.middleware.ts) and the resolved access token (set by
-// accessToken.middleware.ts on public gallery routes).
+// Adds authenticated user and resolved access token to Express's Request type.
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {

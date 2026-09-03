@@ -12,9 +12,6 @@ export const MailService = {
     try {
       await mailTransport!.sendMail({ from: env.MAIL_FROM, ...input });
     } catch (err) {
-      // Delivery failures shouldn't take down the request that triggered the
-      // email (e.g. registration already succeeded) — log loudly and let the
-      // caller's other fallbacks (dev code in the response, resend endpoint) cover it.
       logger.error({ err, to: input.to, subject: input.subject }, 'Failed to send email');
     }
   },

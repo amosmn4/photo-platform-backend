@@ -8,7 +8,6 @@ export const logger = pino({
       ? { target: 'pino-pretty', options: { colorize: true, translateTime: 'HH:MM:ss' } }
       : undefined,
   redact: {
-    // Never let secrets/PII leak into log aggregation.
     paths: ['req.headers.authorization', 'password', 'password_hash', 'token', 'token_hash'],
     remove: true,
   },

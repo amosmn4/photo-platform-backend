@@ -35,8 +35,6 @@ export const AuthService = {
 
     return {
       user: toPublicUser(user),
-      // Dev/staging fallback for when SMTP isn't configured yet (see
-      // MailService) — never expose this outside development.
       devVerificationCode: env.NODE_ENV === 'production' ? undefined : raw,
     };
   },
@@ -54,15 +52,12 @@ export const AuthService = {
     return { devVerificationCode: env.NODE_ENV === 'production' ? undefined : raw };
   },
 
-  /** Verifies the code and logs the user in immediately (they've just proven
-   *  code ownership, so there's no reason to make them re-enter a password). */
+  // Verifies the code and logs the user in immediately since they've already proven ownership.
   async verifyEmail(input: { email: string; code: string; userAgent?: string; ipAddress?: string }) {
     const user = await UserModel.findByEmail(input.email);
     if (!user) throw ApiError.notFound('No account with that email');
 
     if (user.email_verified_at) {
-      // Already verified — treat as success rather than an error so a
-      // double-submit or stale tab doesn't dead-end the user.
     } else {
       const expired = !user.email_verification_expires_at || new Date(user.email_verification_expires_at) < new Date();
       const matches = user.email_verification_code_hash === hashToken(input.code);
@@ -106,9 +101,7 @@ export const AuthService = {
     return raw;
   },
 
-  /** Rotates a refresh token: the old one is revoked and a new pair is issued.
-   *  Rotation on every use limits the blast radius of a stolen refresh token
-   *  to a single unused window. */
+  // Rotates the refresh token on every use, limiting a stolen token's blast radius.
   async refresh(rawRefreshToken: string, userAgent?: string, ipAddress?: string) {
     const hash = hashToken(rawRefreshToken);
     const existing = await RefreshTokenModel.findValidByHash(hash);

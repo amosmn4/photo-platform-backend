@@ -44,8 +44,7 @@ export const AccessTokenModel = {
     return rows;
   },
 
-  /** Atomically checks validity and records a use in one round trip, avoiding
-   *  a check-then-act race under concurrent scans of the same token. */
+  // Atomically checks validity and records a use, avoiding a check-then-act race.
   async recordUseIfValid(id: string): Promise<boolean> {
     const { rows } = await query<{ ok: boolean }>(
       `UPDATE access_tokens

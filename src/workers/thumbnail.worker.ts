@@ -8,16 +8,7 @@ import { getObjectBuffer, putObjectBuffer, buildStorageKey } from '../services/s
 import { generateVariant, extractExif } from '../services/image.service';
 import { logger } from '../config/logger';
 
-/**
- * This is the "background it, never make the photographer wait" pipeline
- * from product doc section 7:
- *   original in storage -> download -> EXIF -> 3 resized webp variants
- *   -> upload variants -> mark photo 'ready' -> bump batch progress
- *
- * Concurrency is deliberately conservative (image processing is CPU-bound);
- * scale by running more worker processes/containers, not by raising this
- * number unboundedly on one box.
- */
+// Background pipeline: original -> download -> EXIF -> resized webp variants -> mark ready -> bump progress.
 const CONCURRENCY = Number(process.env.WORKER_CONCURRENCY ?? 4);
 
 export const photoProcessingWorker = new Worker<PhotoProcessingJobData>(
@@ -58,9 +49,6 @@ export const photoProcessingWorker = new Worker<PhotoProcessingJobData>(
         storageKeyLarge: largeKey,
         width: large.width,
         height: large.height,
-        // Fall back to upload time when a photo carries no EXIF date at all
-        // (edited exports, screenshots) so it still sorts sensibly instead
-        // of vanishing from date-based filtering.
         takenAt: exif.takenAt ?? photo.created_at,
         cameraMake: exif.cameraMake,
         cameraModel: exif.cameraModel,
@@ -81,7 +69,7 @@ export const photoProcessingWorker = new Worker<PhotoProcessingJobData>(
         await UploadBatchModel.incrementProcessed(photo.upload_batch_id, true);
       }
       logger.error({ photoId, err }, 'Photo processing failed');
-      throw err; // let BullMQ retry per the queue's backoff policy
+      throw err;
     }
   },
   { connection: redisConnection, concurrency: CONCURRENCY },

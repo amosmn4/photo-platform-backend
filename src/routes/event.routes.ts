@@ -14,7 +14,7 @@ import {
 
 const router = Router();
 
-router.use(requireAuth); // everything below requires a logged-in photographer
+router.use(requireAuth);
 
 router.post('/', validate({ body: createEventSchema }), EventController.create);
 router.get('/', EventController.list);

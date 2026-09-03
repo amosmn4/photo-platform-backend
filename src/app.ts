@@ -15,12 +15,12 @@ export function createApp() {
   app.use(helmet());
   app.use(
     cors({
-      origin: true, // reflect request origin — tighten to an allowlist in production via CORS_ORIGIN
+      origin: true,
       credentials: true,
     }),
   );
   app.use(compression());
-  app.use(express.json({ limit: '2mb' })); // request bodies are metadata only; images never transit here
+  app.use(express.json({ limit: '2mb' }));
   app.use(cookieParser());
   app.use(pinoHttp({ logger }));
   app.use(generalLimiter);

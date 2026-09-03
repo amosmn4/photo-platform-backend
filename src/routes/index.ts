@@ -7,9 +7,9 @@ import uploadRoutes from './upload.routes';
 const router = Router();
 
 router.use('/auth', authRoutes);
-router.use('/events', eventRoutes);       // photographer-facing, JWT-protected
-router.use('/g', galleryRoutes);          // public, QR-token-gated
-router.use('/uploads', uploadRoutes);     // batch status polling
+router.use('/events', eventRoutes);
+router.use('/g', galleryRoutes);
+router.use('/uploads', uploadRoutes);
 
 router.get('/health', (_req, res) => res.json({ status: 'ok' }));
 

@@ -26,7 +26,6 @@ export const UploadBatchModel = {
     } else {
       await query(`UPDATE upload_batches SET processed_files = processed_files + 1 WHERE id = $1`, [id]);
     }
-    // Auto-complete when every file has been accounted for.
     await query(
       `UPDATE upload_batches
           SET status = CASE WHEN failed_files > 0 THEN 'completed_with_errors' ELSE 'completed' END::upload_batch_status,

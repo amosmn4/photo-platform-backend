@@ -7,18 +7,14 @@ import { env } from '../config/env';
 import { AccessToken, AccessTokenScope } from '../types';
 
 export const TokenService = {
-  /**
-   * Issues a new QR/access token for an event. Returns the raw token (shown
-   * to the photographer exactly once — it's never retrievable again, same
-   * as the private half of any credential) plus a ready-to-print QR image.
-   */
+  // Issues a new access token; the raw token is shown once and never retrievable again.
   async issue(input: {
     eventId: string;
     createdBy: string;
     label?: string;
     scope?: AccessTokenScope;
     sessionId?: string | null;
-    ttlDays?: number | null; // null = no expiry
+    ttlDays?: number | null;
     maxUses?: number | null;
   }) {
     const event = await EventModel.findById(input.eventId);
@@ -42,17 +38,10 @@ export const TokenService = {
     const qrDataUrl = await generateQrDataUrl(raw);
     const galleryUrl = buildGalleryUrl(raw);
 
-    // `raw` is returned only in this response — the DB has just its hash.
     return { token, rawToken: raw, qrDataUrl, galleryUrl };
   },
 
-  /**
-   * Resolves a raw token from an incoming public gallery request. This is
-   * the hot path hit on every QR scan, so it does exactly one indexed
-   * lookup by hash, then an atomic validity+use-increment, then logs the
-   * attempt (fire-and-forget-safe, but awaited here for correctness in
-   * tests; can be moved to a queue if it becomes a bottleneck).
-   */
+  // Hot path for every QR scan: one indexed lookup by hash, then an atomic update.
   async resolve(rawToken: string, ctx: { ipAddress: string | null; userAgent: string | null }): Promise<AccessToken> {
     const hash = hashToken(rawToken);
     const token = await AccessTokenModel.findByHash(hash);
@@ -83,8 +72,7 @@ export const TokenService = {
     await AccessTokenModel.revoke(tokenId, reason);
   },
 
-  /** Permanently removes a QR/access token, distinct from `revoke` (which
-   *  just disables it while leaving it listed for the audit trail). */
+  // Permanently deletes the token, unlike revoke which just disables it for the audit trail.
   async remove(eventId: string, tokenId: string): Promise<void> {
     const tokens = await AccessTokenModel.listForEvent(eventId);
     const match = tokens.find((t) => t.id === tokenId);

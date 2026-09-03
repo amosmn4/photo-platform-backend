@@ -1,16 +1,7 @@
 import nodemailer from 'nodemailer';
 import { env } from './env';
 
-/**
- * Single SMTP transport for the whole app. Works with any SMTP-speaking
- * provider (SendGrid, Mailgun, Postmark, AWS SES's SMTP interface, a
- * self-hosted relay, ...) by setting SMTP_HOST/PORT/USER/PASSWORD — no code
- * changes needed to switch providers.
- *
- * `mailTransport` is null when SMTP_HOST isn't set (e.g. credentials not
- * provisioned yet) — callers must go through MailService, which checks
- * `isMailConfigured` and logs instead of throwing when mail isn't set up.
- */
+// mailTransport is null when SMTP_HOST is unset — callers must check isMailConfigured first.
 export const isMailConfigured = Boolean(env.SMTP_HOST);
 
 export const mailTransport = isMailConfigured

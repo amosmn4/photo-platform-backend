@@ -25,7 +25,7 @@ export const EventController = {
   }),
 
   update: asyncHandler(async (req: Request, res: Response) => {
-    await EventService.getOwned(req.params.eventId, req.user!.id); // ownership check
+    await EventService.getOwned(req.params.eventId, req.user!.id);
     const event = await EventModel.update(req.params.eventId, req.body);
     res.json({ event });
   }),
@@ -46,13 +46,13 @@ export const EventController = {
   }),
 
   listSessions: asyncHandler(async (req: Request, res: Response) => {
-    await EventService.getOwned(req.params.eventId, req.user!.id); // ownership check
+    await EventService.getOwned(req.params.eventId, req.user!.id);
     const sessions = await EventService.listSessions(req.params.eventId);
     res.json({ sessions });
   }),
 
   issueToken: asyncHandler(async (req: Request, res: Response) => {
-    await EventService.getOwned(req.params.eventId, req.user!.id); // ownership check
+    await EventService.getOwned(req.params.eventId, req.user!.id);
     const result = await TokenService.issue({
       eventId: req.params.eventId,
       createdBy: req.user!.id,
@@ -79,9 +79,6 @@ export const EventController = {
     res.status(204).send();
   }),
 
-  // Photographer's own dashboard gallery — same keyset pagination as the
-  // public one, ownership-gated. Frontend uses this for the "manage
-  // photos" grid (with lazy-loaded thumbnails and infinite scroll).
   listPhotos: asyncHandler(async (req: Request, res: Response) => {
     await EventService.getOwned(req.params.eventId, req.user!.id);
     const limit = parseLimit(req.query.limit, { def: 60, max: 150 });

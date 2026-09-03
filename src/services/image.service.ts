@@ -1,14 +1,12 @@
 import sharp from 'sharp';
 import exifr from 'exifr';
+import { logger } from '../config/logger';
 
-/**
- * Product doc section 6: never serve originals to the gallery grid. We
- * generate three derived variants per photo, all web-optimized webp.
- */
+// Never serves originals to the gallery grid — generates three web-optimized webp variants per photo.
 export const IMAGE_VARIANTS = {
-  thumbnail: { width: 320, quality: 70 },  // scroll grid
-  medium: { width: 800, quality: 78 },     // tap-to-preview / lightbox default
-  large: { width: 1920, quality: 82 },     // full lightbox / pre-download preview
+  thumbnail: { width: 320, quality: 70 },
+  medium: { width: 800, quality: 78 },
+  large: { width: 1920, quality: 82 },
 } as const;
 
 export interface GeneratedVariant {
@@ -24,7 +22,7 @@ export async function generateVariant(
   const { width: targetWidth, quality } = IMAGE_VARIANTS[variant];
 
   const pipeline = sharp(originalBuffer)
-    .rotate() // auto-orient using EXIF Orientation, then strip it below
+    .rotate()
     .resize({ width: targetWidth, withoutEnlargement: true })
     .webp({ quality });
 
@@ -32,6 +30,16 @@ export async function generateVariant(
   const metadata = await sharp(buffer).metadata();
 
   return { buffer, width: metadata.width ?? targetWidth, height: metadata.height ?? 0 };
+}
+
+// exifr doesn't guarantee a real Date — malformed EXIF can yield a string or invalid Date.
+function normalizeExifDate(value: unknown): string | null {
+  if (value instanceof Date) return isNaN(value.getTime()) ? null : value.toISOString();
+  if (typeof value === 'string' || typeof value === 'number') {
+    const parsed = new Date(value);
+    return isNaN(parsed.getTime()) ? null : parsed.toISOString();
+  }
+  return null;
 }
 
 export interface ExtractedExif {
@@ -45,13 +53,7 @@ export interface ExtractedExif {
   raw: Record<string, unknown>;
 }
 
-/**
- * Product doc section 8-9: EXIF date/time is the primary customer-facing
- * filter ("photos taken between 2-2:30pm"), so this has to be reliable, not
- * an afterthought. exifr handles the many vendor-specific quirks (Canon,
- * Nikon, Sony all encode slightly differently) that hand-rolled parsing
- * tends to miss.
- */
+// EXIF taken-at time is the primary customer filter, so extraction must be reliable.
 export async function extractExif(originalBuffer: Buffer): Promise<ExtractedExif> {
   try {
     const data = await exifr.parse(originalBuffer, {
@@ -83,10 +85,10 @@ export async function extractExif(originalBuffer: Buffer): Promise<ExtractedExif
       };
     }
 
-    const takenAtDate: Date | undefined = data.DateTimeOriginal ?? data.CreateDate;
+    const takenAt = normalizeExifDate(data.DateTimeOriginal) ?? normalizeExifDate(data.CreateDate);
 
     return {
-      takenAt: takenAtDate ? takenAtDate.toISOString() : null,
+      takenAt,
       cameraMake: data.Make ?? null,
       cameraModel: data.Model ?? null,
       lensModel: data.LensModel ?? null,
@@ -95,9 +97,9 @@ export async function extractExif(originalBuffer: Buffer): Promise<ExtractedExif
       orientation: typeof data.Orientation === 'number' ? data.Orientation : null,
       raw: data,
     };
-  } catch {
-    // Corrupt/partial EXIF should never fail the whole upload pipeline —
-    // fall back to upload time as taken_at (handled by caller).
+  } catch (err) {
+    // TEMP: debugging the worker — remove once EXIF failures stop being a mystery.
+    logger.warn({ err }, 'EXIF extraction failed');
     return {
       takenAt: null,
       cameraMake: null,

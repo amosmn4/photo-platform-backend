@@ -1,14 +1,4 @@
-/**
- * Forward-only SQL migration runner.
- *
- * Applies every .sql file in src/db/migrations, in filename order, that
- * isn't already recorded in schema_migrations. Each file runs inside its
- * own transaction — if a migration fails partway through, it rolls back
- * cleanly and nothing is marked applied.
- *
- * Usage:
- *   npm run migrate
- */
+// Forward-only SQL migration runner; each migration file runs in its own transaction.
 import fs from 'fs';
 import path from 'path';
 import { Pool } from 'pg';

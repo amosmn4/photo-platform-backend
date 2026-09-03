@@ -36,8 +36,6 @@ export const EventService = {
       visibility: input.visibility,
     });
 
-    // Every event gets a default "find my photos" QR at creation time so
-    // the photographer can print it immediately without a second step.
     const { rawToken, qrDataUrl, galleryUrl, token } = await TokenService.issue({
       eventId: event.id,
       createdBy: input.photographerId,
@@ -58,7 +56,7 @@ export const EventService = {
     const { events, total } = await EventModel.listForPhotographer(photographerId, { limit: pageSize, offset });
     const withCover = events.map((e) => ({
       ...e,
-      cover_photo_url: null as string | null, // populated by controller if cover_photo_id resolves
+      cover_photo_url: null as string | null,
     }));
     return { events: withCover, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
   },

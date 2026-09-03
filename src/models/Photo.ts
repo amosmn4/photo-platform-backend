@@ -35,7 +35,7 @@ export const PhotoModel = {
         input.checksumSha256,
       ],
     );
-    return rows[0]; // undefined on duplicate — caller decides how to treat that
+    return rows[0];
   },
 
   async findById(id: string): Promise<Photo | null> {
@@ -109,14 +109,7 @@ export const PhotoModel = {
     ]);
   },
 
-  /**
-   * The gallery feed. Keyset-paginated on (taken_at, id) — see
-   * utils/pagination.ts for why. Served entirely by idx_photos_gallery_page.
-   *
-   * NULLS handling: photos without EXIF taken_at (edited screenshots, some
-   * export pipelines) sort last, ordered by id, so they don't silently
-   * vanish from pagination.
-   */
+  // Keyset-paginated gallery feed; photos with no taken_at sort last, not dropped.
   async listGalleryPage(params: {
     eventId: string;
     sessionId?: string | null;
@@ -133,8 +126,6 @@ export const PhotoModel = {
     }
 
     if (cursor) {
-      // Keyset predicate for DESC ordering on (taken_at NULLS LAST, id DESC):
-      // "rows strictly after the cursor row in that ordering."
       values.push(cursor.takenAt, cursor.id);
       const takenAtIdx = values.length - 1;
       const idIdx = values.length;
@@ -158,7 +149,7 @@ export const PhotoModel = {
     return rows;
   },
 
-  /** "Find my photos" by a customer-provided time window (product doc option A). */
+  // "Find my photos" by a customer-provided time window (product doc option A).
   async listByTimeRange(params: {
     eventId: string;
     fromIso: string;
@@ -207,5 +198,19 @@ export const PhotoModel = {
 
   async softDelete(id: string): Promise<void> {
     await query(`UPDATE photos SET deleted_at = now() WHERE id = $1`, [id]);
+  },
+
+  // Batch of soft-deleted photos past their retention cutoff, for the cleanup worker to purge.
+  async listSoftDeletedBefore(cutoff: Date, limit = 500): Promise<Photo[]> {
+    const { rows } = await query<Photo>(
+      `SELECT * FROM photos WHERE deleted_at IS NOT NULL AND deleted_at < $1
+        ORDER BY deleted_at ASC LIMIT $2`,
+      [cutoff.toISOString(), limit],
+    );
+    return rows;
+  },
+
+  async hardDelete(id: string): Promise<void> {
+    await query(`DELETE FROM photos WHERE id = $1`, [id]);
   },
 };

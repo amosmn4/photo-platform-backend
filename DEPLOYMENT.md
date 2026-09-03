@@ -123,6 +123,7 @@ summary:
 | Object storage | `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_FORCE_PATH_STYLE`, `S3_SIGNED_URL_TTL_SECONDS`, `CDN_BASE_URL` |
 | Upload limits | `MAX_UPLOAD_FILE_SIZE_BYTES`, `MAX_UPLOAD_BATCH_SIZE` |
 | Access tokens | `DEFAULT_ACCESS_TOKEN_TTL_DAYS` |
+| Trash / cleanup | `PHOTO_TRASH_RETENTION_DAYS` |
 | Rate limiting | `RATE_LIMIT_WINDOW_MINUTES`, `RATE_LIMIT_MAX_REQUESTS` |
 
 `src/config/env.ts` validates all of these at boot with `zod` — the process
@@ -156,7 +157,21 @@ failing unpredictably later.
   storage, which should have its own versioning/backup policy — Postgres
   backups protect metadata, not the images themselves).
 
-## 9. Useful one-off commands
+## 9. Photo trash / cleanup
+
+Removing a photo (`DELETE /events/:id/photos/:photoId`) is a **soft delete**
+— it sets `deleted_at` and immediately hides the photo, but its storage
+objects (original + thumbnail/medium/large) are left in place so removal is
+recoverable in principle.
+
+`workers/photoCleanup.worker.ts` runs inside the same `start:worker` process
+(no separate process to manage) and, once daily, permanently deletes the
+storage objects and DB row for anything soft-deleted more than
+`PHOTO_TRASH_RETENTION_DAYS` (default 30) days ago. A photo that fails to
+purge (e.g. a transient storage error) is simply left soft-deleted and
+retried on the next run — nothing needs to be done manually.
+
+## 10. Useful one-off commands
 
 ```bash
 # Tail worker logs only

@@ -6,15 +6,15 @@ services:
     container_name: photodrop_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: photodrop
-      POSTGRES_PASSWORD: photodrop
-      POSTGRES_DB: photodrop
+      POSTGRES_USER: ${POSTGRES_USER:-photodrop}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-photodrop}
+      POSTGRES_DB: ${POSTGRES_DB:-photodrop}
     ports:
       - "5433:5432"
     volumes:
       - photodrop_pg_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U photodrop"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-photodrop}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -40,8 +40,8 @@ services:
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: photodrop_minio
-      MINIO_ROOT_PASSWORD: photodrop_minio_secret
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-photodrop_minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-photodrop_minio_secret}
     ports:
       - "9000:9000" # S3 API
       - "9001:9001" # Web console

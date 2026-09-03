@@ -40,8 +40,13 @@ export async function getPresignedDownloadUrl(key: string, downloadFilename?: st
 /** Public read URL for gallery thumbnails/previews — served via CDN when configured. */
 export function getPublicUrl(key: string): string {
   if (env.CDN_BASE_URL) return `${env.CDN_BASE_URL}/${key}`;
-  // Fall back to a signed URL from the origin if no CDN is fronting storage.
-  return `${env.S3_ENDPOINT ?? `https://${BUCKET}.s3.${env.S3_REGION}.amazonaws.com`}/${BUCKET}/${key}`;
+  // Path-style when a custom endpoint is set (MinIO, DigitalOcean Spaces,
+  // etc. via S3_ENDPOINT) — the bucket isn't part of the host, so it belongs
+  // in the path. Virtual-hosted-style for real AWS S3 (S3_ENDPOINT unset) —
+  // there the bucket IS the host, so appending it to the path too would
+  // double it up and 404 on every request.
+  if (env.S3_ENDPOINT) return `${env.S3_ENDPOINT}/${BUCKET}/${key}`;
+  return `https://${BUCKET}.s3.${env.S3_REGION}.amazonaws.com/${key}`;
 }
 
 export async function getObjectBuffer(key: string): Promise<Buffer> {

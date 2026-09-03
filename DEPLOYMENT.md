@@ -131,6 +131,14 @@ failing unpredictably later.
 
 ## 8. Production deployment notes
 
+- **Self-hosted Postgres/MinIO via docker-compose**: `docker-compose.yml`
+  reads `POSTGRES_USER`/`POSTGRES_PASSWORD`/`POSTGRES_DB` and
+  `MINIO_ROOT_USER`/`MINIO_ROOT_PASSWORD` from `.env` (falling back to the
+  local-dev defaults if unset). Before running `docker compose up -d` on any
+  shared or production box, set real values for these in `.env` — and keep
+  `DATABASE_URL` (user:password@.../db) and `S3_ACCESS_KEY_ID`/
+  `S3_SECRET_ACCESS_KEY` in sync with whatever you set here, since those are
+  what the app actually authenticates with. See `.env.example` for details.
 - **Object storage**: swap `S3_ENDPOINT`/credentials to real AWS S3 (or
   Spaces/B2) — no code changes required, only `.env`.
 - **CDN**: set `CDN_BASE_URL` to serve thumbnails/previews through a CDN

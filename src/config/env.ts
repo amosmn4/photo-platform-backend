@@ -45,6 +45,19 @@ const schema = z.object({
   // to direct storage endpoints when unset.
   CDN_BASE_URL: z.string().url().optional(),
 
+  // Outbound email (SMTP) — verification codes today, notifications later.
+  // Leave SMTP_HOST unset to run without email delivery: outside production
+  // the verification code is still returned directly in the API response as
+  // a dev fallback, and every send attempt is logged instead of failing
+  // silently. Works with any SMTP provider (SendGrid, Mailgun, Postmark, SES's
+  // SMTP interface, a self-hosted relay, ...) — only these values change.
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().int().positive().default(587),
+  SMTP_SECURE: z.coerce.boolean().default(false), // true for port 465 (implicit TLS)
+  SMTP_USER: z.string().optional(),
+  SMTP_PASSWORD: z.string().optional(),
+  MAIL_FROM: z.string().default('PhotoDrop <no-reply@localhost>'),
+
   // Upload limits
   MAX_UPLOAD_FILE_SIZE_BYTES: z.coerce.number().int().positive().default(52_428_800), // 50MB/photo
   MAX_UPLOAD_BATCH_SIZE: z.coerce.number().int().positive().default(20000),
